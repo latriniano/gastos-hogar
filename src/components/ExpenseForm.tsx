@@ -190,9 +190,10 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
       }
 
       router.push('/gastos');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving expense:', err);
-      setSaveError('Error al guardar el gasto. Por favor intenta de nuevo.');
+      const detail = err?.message || err?.details || JSON.stringify(err);
+      setSaveError(`Error al guardar el gasto: ${detail}`);
     } finally {
       setSaving(false);
     }
