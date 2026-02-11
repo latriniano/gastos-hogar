@@ -62,20 +62,23 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   }, [fetchExpenses]);
 
   const createExpense = async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at' | 'category' | 'paid_by_user'>) => {
+    // Strip relation/virtual fields that don't exist as columns in the expenses table
+    const { debtors, category, paid_by_user, contact, ...expenseFields } = expense as any;
+
     const expensesToInsert = [];
-    const installments = expense.installments || 1;
-    const totalAmount = expense.amount;
+    const installments = expenseFields.installments || 1;
+    const totalAmount = expenseFields.amount;
     const installmentAmount = parseFloat((totalAmount / installments).toFixed(2));
     const groupId = installments > 1 ? crypto.randomUUID() : null;
 
     // Create rows for each installment
     // Parse date parts to handle local time consistently without TZ shifts
-    const [year, month, day] = expense.date.split('-').map(Number); // month is 1-based here
+    const [year, month, day] = expenseFields.date.split('-').map(Number); // month is 1-based here
 
     for (let i = 0; i < installments; i++) {
       let dateStr = '';
 
-      if (expense.payment_method === 'credit_card') {
+      if (expenseFields.payment_method === 'credit_card') {
         // Credit card payments start the 1st of the NEXT month
         const d = new Date(year, month + i, 1);
 
@@ -94,15 +97,15 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       }
 
       expensesToInsert.push({
-        ...expense,
+        ...expenseFields,
         amount: installmentAmount,
         date: dateStr,
-        description: installments > 1 ? `${expense.description} (Cuota ${i + 1}/${installments})` : expense.description,
+        description: installments > 1 ? `${expenseFields.description} (Cuota ${i + 1}/${installments})` : expenseFields.description,
         installment_number: installments > 1 ? i + 1 : null,
         installments_total: installments > 1 ? installments : null,
         group_id: groupId,
-        contact_id: expense.contact_id || null, // Ensure explicitly null if undefined
-        is_debt_settlement: expense.is_debt_settlement || false
+        contact_id: expenseFields.contact_id || null, // Ensure explicitly null if undefined
+        is_debt_settlement: expenseFields.is_debt_settlement || false
       });
     }
 
@@ -150,8 +153,8 @@ export function useExpenses(options: UseExpensesOptions = {}) {
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
-    // Separate primary updates from debtors updates
-    const { debtors, ...expenseUpdates } = updates;
+    // Strip relation/virtual fields that don't exist as columns in the expenses table
+    const { debtors, category, paid_by_user, contact, ...expenseUpdates } = updates as any;
 
     const { data, error } = await supabase
       .from('expenses')

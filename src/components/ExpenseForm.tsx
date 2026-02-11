@@ -54,6 +54,7 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
   const [showNotes, setShowNotes] = useState(!!expense?.notes);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Contact search states
@@ -125,6 +126,7 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
     // but creating recursion needs a 'paid_by' which we can use 'paidBy' state.
 
     setSaving(true);
+    setSaveError(null);
     try {
       let receiptUrl = expense?.receipt_url || null;
 
@@ -190,6 +192,7 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
       router.push('/gastos');
     } catch (err) {
       console.error('Error saving expense:', err);
+      setSaveError('Error al guardar el gasto. Por favor intenta de nuevo.');
     } finally {
       setSaving(false);
     }
@@ -499,6 +502,12 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
             className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             placeholder="Notas adicionales..."
           />
+        </div>
+      )}
+
+      {saveError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {saveError}
         </div>
       )}
 
