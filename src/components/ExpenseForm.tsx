@@ -168,7 +168,10 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
       if (expense) {
         await updateExpense(expense.id, expenseData);
       } else {
-        await createExpense(expenseData);
+        const result = await createExpense(expenseData);
+        if (!result || result.length === 0) {
+          throw new Error('El gasto no se guardo — la base de datos no devolvio registros');
+        }
       }
 
       if (isRecurring) {
@@ -193,7 +196,10 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
     } catch (err: any) {
       console.error('Error saving expense:', err);
       const detail = err?.message || err?.details || JSON.stringify(err);
-      setSaveError(`Error al guardar el gasto: ${detail}`);
+      const errorMsg = `Error al guardar el gasto: ${detail}`;
+      setSaveError(errorMsg);
+      // Alert for mobile users who can't see console
+      alert(errorMsg);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
