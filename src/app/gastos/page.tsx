@@ -20,7 +20,7 @@ export default function GastosPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedPaidBy, setSelectedPaidBy] = useState('');
 
-  const { expenses, loading, deleteExpense } = useExpenses({
+  const { expenses, loading, fetchError, deleteExpense } = useExpenses({
     month,
     year,
     categoryId: selectedCategory || undefined,
@@ -81,6 +81,12 @@ export default function GastosPage() {
         </select>
       </div>
 
+      {fetchError && (
+        <Card className="bg-red-50 border border-red-200">
+          <p className="text-red-700 text-sm">Error al cargar gastos: {fetchError}</p>
+        </Card>
+      )}
+
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map(i => (
@@ -89,7 +95,7 @@ export default function GastosPage() {
             </Card>
           ))}
         </div>
-      ) : expenses.length === 0 ? (
+      ) : expenses.length === 0 && !fetchError ? (
         <Card className="text-center py-12">
           <p className="text-gray-400 text-sm">No hay gastos en este periodo</p>
         </Card>

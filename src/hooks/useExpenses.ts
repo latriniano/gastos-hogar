@@ -16,18 +16,22 @@ interface UseExpensesOptions {
 export function useExpenses(options: UseExpensesOptions = {}) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const supabase = createClient();
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     let query = supabase
       .from('expenses')
       .select('*, category:categories(*), paid_by_user:users!expenses_paid_by_fkey(*), contact:contacts(*), debtors:expense_debtors(*, contact:contacts(*))')
       .order('date', { ascending: false });
 
     if (options.month !== undefined && options.year !== undefined) {
-      const startDate = new Date(options.year, options.month, 1).toISOString().split('T')[0];
-      const endDate = new Date(options.year, options.month + 1, 0).toISOString().split('T')[0];
+      // Build date strings directly to avoid timezone issues with toISOString()
+      const startDate = `${options.year}-${String(options.month + 1).padStart(2, '0')}-01`;
+      const lastDay = new Date(options.year, options.month + 1, 0).getDate();
+      const endDate = `${options.year}-${String(options.month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       query = query.gte('date', startDate).lte('date', endDate);
     }
 
@@ -51,6 +55,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
     if (error) {
       console.error('Error fetching expenses:', error);
+      setFetchError(error.message || 'Error al cargar gastos');
     } else {
       setExpenses(data as Expense[]);
     }
@@ -157,7 +162,6 @@ export function useExpenses(options: UseExpensesOptions = {}) {
       }
     }
 
-    await fetchExpenses();
     return createdExpenses;
   };
 
@@ -218,5 +222,5 @@ export function useExpenses(options: UseExpensesOptions = {}) {
     await fetchExpenses();
   };
 
-  return { expenses, loading, refetch: fetchExpenses, createExpense, updateExpense, deleteExpense };
+  return { expenses, loading, fetchError, refetch: fetchExpenses, createExpense, updateExpense, deleteExpense };
 }

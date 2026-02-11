@@ -194,6 +194,7 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
       console.error('Error saving expense:', err);
       const detail = err?.message || err?.details || JSON.stringify(err);
       setSaveError(`Error al guardar el gasto: ${detail}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
     }
@@ -203,6 +204,12 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {saveError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {saveError}
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Monto</label>
         <div className="flex gap-2">
@@ -503,12 +510,6 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
             className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             placeholder="Notas adicionales..."
           />
-        </div>
-      )}
-
-      {saveError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          {saveError}
         </div>
       )}
 
