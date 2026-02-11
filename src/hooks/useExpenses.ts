@@ -154,7 +154,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     // Strip relation/virtual fields that don't exist as columns in the expenses table
-    const { debtors, category, paid_by_user, contact, ...expenseUpdates } = updates as any;
+    const { debtors, category, paid_by_user, contact, ...expenseUpdates } = updates as Partial<Expense> & Record<string, any>;
 
     const { data, error } = await supabase
       .from('expenses')
@@ -172,7 +172,7 @@ export function useExpenses(options: UseExpensesOptions = {}) {
 
       // 2. Insert new list
       if (debtors.length > 0) {
-        const debtorsToInsert = debtors.map(d => ({
+        const debtorsToInsert = debtors.map((d: any) => ({
           expense_id: id,
           contact_id: d.contact_id,
           amount: d.amount || null,
