@@ -54,6 +54,7 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
   const [showNotes, setShowNotes] = useState(!!expense?.notes);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Contact search states
@@ -125,6 +126,7 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
     // but creating recursion needs a 'paid_by' which we can use 'paidBy' state.
 
     setSaving(true);
+    setSaveError(null);
     try {
       let receiptUrl = expense?.receipt_url || null;
 
@@ -166,7 +168,10 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
       if (expense) {
         await updateExpense(expense.id, expenseData);
       } else {
-        await createExpense(expenseData);
+        const result = await createExpense(expenseData);
+        if (!result || result.length === 0) {
+          throw new Error('El gasto no se guardo — la base de datos no devolvio registros');
+        }
       }
 
       if (isRecurring) {
@@ -188,8 +193,14 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
       }
 
       router.push('/gastos');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving expense:', err);
+      const detail = err?.message || err?.details || JSON.stringify(err);
+      const errorMsg = `Error al guardar el gasto: ${detail}`;
+      setSaveError(errorMsg);
+      // Alert for mobile users who can't see console
+      alert(errorMsg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
     }
@@ -199,6 +210,12 @@ export default function ExpenseForm({ expense }: ExpenseFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {saveError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {saveError}
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Monto</label>
         <div className="flex gap-2">
